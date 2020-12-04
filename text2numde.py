@@ -58,6 +58,11 @@ Komma = {
     "komma": ','
 }
 
+Sign = {
+    "plus": '+',
+    "minus": '-'
+}
+
 All_Numbers = list(Units.keys()) + list(Magnitude.keys()) + list(Hundred.keys()) + list(Komma.keys()) + list(["und"])
 
 class NumberException(Exception):
@@ -72,7 +77,67 @@ def is_number(word):
         return False
     return True
 
-	
+def sentence2num(s, signed = False):
+    sentences = re.split(r"\s*[\.,;\(\)…\[\]:!\?]+\s*", s)
+    punctuations = re.findall(r"\s*[\.,;\(\)…\[\]:!\?]+\s*", s)
+    
+    if len(punctuations) < len(sentences):
+        punctuations.append("")
+    
+    out_segments: List[str] = []    
+    for segment, sep in zip(sentences, punctuations):
+        tokens = segment.split()
+        sentence = []
+        out_tokens: List[str] = []
+        out_tokens_is_num: List[bool] = []
+        old_num_result = None
+        token_index = 0
+
+        while token_index < len(tokens):
+            t = tokens[token_index]
+            sentence.append(t)
+                                
+            try:
+                num_result = text2num(" ".join(sentence))
+                old_num_result = num_result
+                token_index += 1
+            except:
+                # " ".join(sentence) cannot be resolved to a number
+                
+                # last token has to be tested again in case there is sth like "eins eins eins"
+                # which is invalid in sum but separately allowed
+                if not old_num_result is None:
+                    out_tokens.append(str(old_num_result))
+                    out_tokens_is_num.append(True)
+                    sentence.clear()
+                else:
+                    out_tokens.append(t)
+                    out_tokens_is_num.append(False)
+                    sentence.clear()
+                    token_index += 1
+                old_num_result = None
+                
+        # any remaining tokens to add?
+        if not old_num_result is None:
+            out_tokens.append(str(old_num_result))
+            out_tokens_is_num.append(True)
+            
+        # join all and keep track on signs
+        out_segment = ""
+        for index, ot in enumerate(out_tokens):
+            if (ot in Sign) and signed:
+                if index < len(out_tokens)-1:
+                    if out_tokens_is_num[index+1] == True:
+                        out_segment += Sign[ot]
+            else:
+                out_segment +=ot + " "
+                    
+        out_segments.append(out_segment.strip())
+        out_segments.append(sep)
+    
+    
+    return "".join(out_segments)
+
 def split_ger(word):
     """Splits number words into separate words, e.g. einhundertfünzig-> ein hundert fünfzig"""
     
@@ -120,7 +185,7 @@ def text2num(s):
                 raise NumberException("Unknown number: "+w)
     res = n + g
     
-	# floating point number
+    # floating point number
     if len(b) == 2:
         ak = "0."
         a = re.split(r"[\s-]+", b[1].strip())
@@ -148,6 +213,11 @@ if __name__ == "__main__":
     print(text2num("eins komma zwei"))
     print(text2num("nullkommaneunachtsiebensechs"))
     print(text2num("nullkommazehn"))
+    print(text2num("einskommafünf"))
+	
+    print(sentence2num("Ich habe eine eins."))
+    print(sentence2num("Ich habe sechsundzwanzig Hunde und einhundertdrei Katzen."))	
+    print(sentence2num("Ich habe einskommafünf Kilo abgenommen."))
     
     assert 1 == text2num("eins")
     assert 12 == text2num("zwölf")
@@ -163,7 +233,11 @@ if __name__ == "__main__":
     assert 1.2 == text2num("eins komma zwei")
     assert 0.9876 == text2num("nullkommaneunachtsiebensechs")
     assert 0.10 == text2num("nullkommazehn")
-	
+    
     assert False == is_number("Haus")
     assert False == is_number("einsBahn")
     assert True == is_number("einhundertdrei")
+	
+    assert "Ich habe eine 1." == sentence2num("Ich habe eine eins.")
+    assert "Ich habe 26 Hunde und 103 Katzen." == sentence2num("Ich habe sechsundzwanzig Hunde und einhundertdrei Katzen.")
+    assert "Ich habe 1.5 Kilo abgenommen." == sentence2num("Ich habe einskommafünf Kilo abgenommen.")
