@@ -58,13 +58,21 @@ Komma = {
     "komma": ','
 }
 
-All_Numbers = list(Units.keys()) + list(Magnitude.keys()) + list(Hundred.keys()) + list(Komma.keys())
+All_Numbers = list(Units.keys()) + list(Magnitude.keys()) + list(Hundred.keys()) + list(Komma.keys()) + list(["und"])
 
 class NumberException(Exception):
     def __init__(self, msg):
         Exception.__init__(self, msg)
 
-                
+
+def is_number(word):
+    try:
+        text2num(word)
+    except:
+        return False
+    return True
+
+	
 def split_ger(word):
     """Splits number words into separate words, e.g. einhundertfünzig-> ein hundert fünfzig"""
     
@@ -74,7 +82,7 @@ def split_ger(word):
     current_word = ""
     text = word.lower()
     invalid_word = ""
-    result = ""
+    result = []
     while len(text) > 0:
         # start with the longest
         found = False
@@ -82,17 +90,17 @@ def split_ger(word):
             # Check at the beginning of the current sentence for the longest word in ALL_WORDS
             if text.startswith(sw):
                 if not sw == "und":
-                    result += sw + " "
+                    result.append(sw)
                 text = text[len(sw):]
-                found = True
+                text = text.strip()
+                found = True 
                 break
         if not found:
-            text = text[1:]
-    return result.strip()
+            raise NumberException("Can't split, unknown number: '"+word+"'")
+    return " ".join(result)
     
 def text2num(s):
     words = split_ger(s)
-    
     b = re.split(r"komma", words)
     a = re.split(r"[\s-]+", b[0].strip())
     n = 0
@@ -155,3 +163,7 @@ if __name__ == "__main__":
     assert 1.2 == text2num("eins komma zwei")
     assert 0.9876 == text2num("nullkommaneunachtsiebensechs")
     assert 0.10 == text2num("nullkommazehn")
+	
+    assert False == is_number("Haus")
+    assert False == is_number("einsBahn")
+    assert True == is_number("einhundertdrei")
