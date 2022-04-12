@@ -6,6 +6,8 @@ It can furthermore:
 - Validate a text to see if it represents a numbers
 - Replace numbers in sentences without modifying the sentence around the numbers.
 
+<a href="https://www.buymeacoffee.com/padmalcom" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
 ## Example usage
 
 ```python
