@@ -35,7 +35,7 @@ Units = {
 }
 
 Hundred = {
-    "hundert": 100
+    "hundert": 100,
 }
 
 Magnitude = {
@@ -163,28 +163,35 @@ def __split_ger__(word):
         if not found:
             raise NumberException("Can't split, unknown number: '"+word+"'")
     return " ".join(result)
-    
+
+
 def text2num(s):
     words = __split_ger__(s)
     b = re.split(r"komma", words)
     a = re.split(r"[\s-]+", b[0].strip())
     n = 0
+    h = 0
     g = 0
+    if a[0] == "ein" and a[1] == "hundert":
+        a = a[1:]
     for w in a:
         x = Units.get(w, None)
+        h = Hundred.get(w, None)
         if x is not None:
             g += x
         elif w == "hundert" and g != 0:
             g *= 100
+        elif w == "hundert" and h is not None and x is None:
+            g += 100
         else:
             x = Magnitude.get(w, None)
             if x is not None:
                 n += g * x
                 g = 0
             else:
-                raise NumberException("Unknown number: "+w)
+                raise NumberException("Unknown number: " + w)
     res = n + g
-    
+
     # floating point number
     if len(b) == 2:
         ak = "0."
@@ -194,6 +201,6 @@ def text2num(s):
             if x is not None:
                 ak += str(x)
             else:
-                raise NumberException("Unknown number: "+w)
+                raise NumberException("Unknown number: " + w)
         res += eval(ak)
     return res
