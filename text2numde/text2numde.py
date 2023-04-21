@@ -31,7 +31,8 @@ Units = {
     'sechzig': 60,
     'siebzig': 70,
     'achtzig': 80,
-    'neunzig': 90
+    'neunzig': 90,
+    'hundert': 100
 }
 
 Hundred = {
